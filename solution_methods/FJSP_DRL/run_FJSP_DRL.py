@@ -10,6 +10,12 @@ import argparse
 import logging
 import os
 import torch
+import sys
+
+# Change the current working directory to the project root to allow for imports
+# This is necessary because we are running the script from a subdirectory
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.append(project_root)
 
 from visualization import gantt_chart, precedence_chart
 from solution_methods.helper_functions import load_job_shop_env, load_parameters, initialize_device, set_seeds
@@ -21,7 +27,7 @@ from solution_methods.FJSP_DRL.utils import output_dir_exp_name, results_saving
 from solution_methods.FJSP_DRL.src.online_FJSP_DRL import run_online_dispatcher
 
 
-PARAM_FILE = "../../configs/FJSP_DRL.toml"
+PARAM_FILE = "./configs/FJSP_DRL.toml"
 logging.basicConfig(level=logging.INFO)
 
 
@@ -29,6 +35,11 @@ def run_FJSP_DRL(jobShopEnv, **parameters):
     # Set up device and seeds
     device = initialize_device(parameters)
     set_seeds(parameters["test_parameters"]["seed"])
+
+    # Override config device with the actual initialized device
+    device_str = "cuda" if device.type == "cuda" else "cpu"
+    parameters["model_parameters"]["device"] = device_str
+    parameters["test_parameters"]["device"] = device_str
 
     # Configure default tensor type for device
     torch.set_default_device('cuda' if device.type == 'cuda' else 'cpu')
@@ -118,14 +129,22 @@ def main(param_file=PARAM_FILE):
         # Plot Gantt chart if required
         if show_gantt or save_gantt:
             logging.info("Generating Gantt chart.")
-            plt = gantt_chart.plot(jobShopEnv)
+            try:
+                plt = gantt_chart.plot(jobShopEnv)
 
-            if save_gantt:
-                plt.savefig(output_dir + "/gantt.png")
-                logging.info(f"Gantt chart saved to {output_dir}")
+                if save_gantt:
+                    plt.savefig(output_dir + "/gantt.png")
+                    logging.info(f"Gantt chart saved to {output_dir}")
 
-            if show_gantt:
-                plt.show()
+                if show_gantt:
+                    try:
+                        plt.show()
+                    except Exception as e:
+                        logging.warning(f"Could not display Gantt chart (likely due to no GUI support): {e}")
+
+                plt.close('all')
+            except Exception as e:
+                logging.error(f"Error during Gantt chart generation/saving: {e}")
 
         # Save results if enabled
         if save_results:
