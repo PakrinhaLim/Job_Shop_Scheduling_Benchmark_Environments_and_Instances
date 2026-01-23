@@ -1,0 +1,20 @@
+c:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\.venv\Lib\site-packages\torch\__init__.py:1275: UserWarning: torch.set_default_tensor_type() is deprecated as of PyTorch 2.1, please use torch.set_default_dtype() and torch.set_default_device() as alternatives. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\tensor\python_tensor.cpp:436.)
+  _C._set_default_tensor_type(t)
+Loading parameters from configs/MADRL.toml
+Initializing device...
+Device initialized: cuda:0
+Initializing Trainer...
+Starting training loop...
+Starting MADRL Training...
+progress:   0%|          | 0/100 [00:00<?, ?it/s]progress:   0%|          | 0/100 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\train_MADRL.py", line 222, in main
+    trainer.train()
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\train_MADRL.py", line 112, in train
+    state = self.env.set_initial_data(dataset_job_length, dataset_op_pt)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\madrl_env.py", line 196, in set_initial_data
+    self.old_op_match_job_left_op_nums = np.copy(self.old_op_match_job_left_op_nums)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MADRL_FJSPEnv' object has no attribute 'old_op_match_job_left_op_nums'
+
+Error during training: 'MADRL_FJSPEnv' object has no attribute 'old_op_match_job_left_op_nums'

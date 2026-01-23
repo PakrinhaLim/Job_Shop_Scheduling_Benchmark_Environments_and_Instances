@@ -19,15 +19,17 @@ import numpy as np
 import torch
 from visdom import Visdom
 
+# Add the base path to the Python module search path
+base_path = Path(__file__).resolve().parents[2]
+sys.path.append(str(base_path))
+
 from solution_methods.helper_functions import load_parameters, initialize_device, set_seeds
 from solution_methods.FJSP_DRL.src import PPO as PPO_model
 from solution_methods.FJSP_DRL.src.case_generator import CaseGenerator
 from solution_methods.FJSP_DRL.src.env_training import FJSPEnv_training
 from solution_methods.FJSP_DRL.src.validate import get_validate_env, validate
 
-# Add the base path to the Python module search path
-base_path = Path(__file__).resolve().parents[2]
-sys.path.append(str(base_path))
+
 
 PARAM_FILE = str(base_path) + "/configs/FJSP_DRL.toml"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -136,15 +138,26 @@ def main(param_file: str = PARAM_FILE):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="train FJSP_DRL")
-    parser.add_argument(
-        "config_file",
-        metavar="-f",
-        type=str,
-        nargs="?",
-        default=PARAM_FILE,
-        help="path to config file",
-    )
+    print("Script started")
+    try:
+        parser = argparse.ArgumentParser(description="train FJSP_DRL")
+        parser.add_argument(
+            "config_file",
+            metavar="-f",
+            type=str,
+            nargs="?",
+            default=PARAM_FILE,
+            help="path to config file",
+        )
 
-    args = parser.parse_args()
-    main(param_file=args.config_file)
+        args = parser.parse_args()
+        print(f"Loading parameters from: {args.config_file}")
+        main(param_file=args.config_file)
+    except Exception as e:
+        with open("error.log", "w") as f:
+            f.write(f"An error occurred: {e}\n")
+            import traceback
+            traceback.print_exc(file=f)
+        print(f"An error occurred: {e}")
+        import traceback
+        traceback.print_exc()

@@ -15,6 +15,9 @@ def parse_fjsp(JobShop, instance, from_absolute_path=False):
     else:
         data_path = instance
 
+    if not Path(data_path).exists():
+        raise FileNotFoundError(f"Instance file not found: {data_path}")
+
     with open(data_path, "r") as data:
         total_jobs, total_machines, max_operations = re.findall(
             '\\S+', data.readline())
@@ -86,6 +89,7 @@ def parse_fjsp(JobShop, instance, from_absolute_path=False):
 # if __name__ == "__main__":
 #     from scheduling_environment.jobShop import JobShop
 #     jobShopEnv = JobShop()
-#     jobShopEnv = parse_fjsp(jobShopEnv, '/fjsp/1_brandimarte/Mk01.fjs')
+#     jobShopEnv = parse_fjsp(jobShopEnv, '/fjsp/brandimarte/Mk01.fjs')
+#     # jobShopEnv = parse_fjsp(jobShopEnv, '/fjsp/fattahi/MFJS1.fjs')
 #     jobShopEnv.update_operations_available_for_scheduling()
 #     print(jobShopEnv.operations_available_for_scheduling)

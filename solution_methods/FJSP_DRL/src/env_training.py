@@ -342,9 +342,7 @@ class FJSPEnv_training():
         self.time = e
 
         # Update partial schedule (state), variables and feature vectors
-        aa = self.machines_batch.transpose(1, 2)
-        aa[d, 0] = 1
-        self.machines_batch = aa.transpose(1, 2)
+        self.machines_batch[d, 0] = 1
 
         utiliz = self.machines_batch[:, :, 2]
         cur_time = self.time[:, None].expand_as(utiliz)

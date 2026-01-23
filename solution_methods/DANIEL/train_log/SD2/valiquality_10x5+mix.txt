@@ -1,0 +1,1 @@
+[np.float64(452.51), np.float64(462.8), np.float64(468.74), np.float64(468.31), np.float64(485.4), np.float64(512.7), np.float64(487.13), np.float64(453.53), np.float64(448.93), np.float64(438.33)]

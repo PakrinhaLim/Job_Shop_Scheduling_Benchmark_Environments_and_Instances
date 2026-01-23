@@ -1,0 +1,21 @@
+c:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\.venv\Lib\site-packages\torch\__init__.py:1275: UserWarning: torch.set_default_tensor_type() is deprecated as of PyTorch 2.1, please use torch.set_default_dtype() and torch.set_default_device() as alternatives. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\tensor\python_tensor.cpp:436.)
+  _C._set_default_tensor_type(t)
+2026-01-22 14:51:47,326 - Trained policy loaded from C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\save\SD2\20x10+mix+MADRL.pth.
+Traceback (most recent call last):
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\run_MADRL.py", line 176, in <module>
+    main(param_file=args.config_file)
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\run_MADRL.py", line 127, in main
+    makespan, jobShopEnv = run_MADRL_FJSP(jobShopEnv, **parameters)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\run_MADRL.py", line 108, in run_MADRL_FJSP
+    state, reward, done = env_test.step_madrl(actions.cpu().numpy())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\env_test_madrl.py", line 42, in step_madrl
+    return super(MADRL_FJSPEnv_test, self).step_madrl(actions.reshape(1, -1))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\madrl_env.py", line 675, in step_madrl
+    self._step_core(chosen_job, m, active_envs)
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\env_test_madrl.py", line 58, in _step_core
+    op_idx = self.candidate[env_idx, job_idx]
+             ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+IndexError: index 13 is out of bounds for axis 0 with size 1

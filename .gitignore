@@ -1,0 +1,8 @@
+.venv/
+
+*.pyc
+*.png
+*.json
+*.pt
+*.toml
+*.pth

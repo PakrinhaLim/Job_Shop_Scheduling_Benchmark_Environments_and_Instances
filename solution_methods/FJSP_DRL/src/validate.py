@@ -15,7 +15,7 @@ def get_validate_env(env_paras, train_paras):
     """
     Generate and return the validation environment from the validation set ()
     """
-    file_path = str(base_path) + "/FJSP_DRL/data" + train_paras["validation_folder"]
+    file_path = str(base_path) + "/FJSP_DRL/training_data" + train_paras["validation_folder"]
     valid_data_files = os.listdir(file_path)
     for i in range(len(valid_data_files)):
         valid_data_files[i] = file_path + valid_data_files[i]

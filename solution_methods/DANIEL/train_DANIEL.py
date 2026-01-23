@@ -43,12 +43,13 @@ class Trainer:
         self.num_envs = config["PPO_Algorithm"]["num_envs"]
         self.device = device
 
-        if not os.path.exists(f"./save/{self.data_source}"):
-            os.makedirs(f"./save/{self.data_source}")
+        self.script_dir = Path(__file__).resolve().parent
+        if not os.path.exists(f"{self.script_dir}/save/{self.data_source}"):
+            os.makedirs(f"{self.script_dir}/save/{self.data_source}")
         if not os.path.exists(
-            f"./train_log/{self.data_source}"
+            f"{self.script_dir}/train_log/{self.data_source}"
         ):
-            os.makedirs(f"./train_log/{self.data_source}")
+            os.makedirs(f"{self.script_dir}/train_log/{self.data_source}")
 
         if device.type == "cuda":
             torch.set_default_tensor_type("torch.cuda.FloatTensor")
@@ -62,9 +63,9 @@ class Trainer:
                 f'{self.n_j}x{self.n_m}{strToSuffix(config["data"]["suffix"])}'
             )
 
-        self.vali_data_path = f"./data/data_train_vali/{self.data_source}/{self.data_name}"
+        self.vali_data_path = f"{self.script_dir}/training_data/data_train_vali/{self.data_source}/{self.data_name}"
         self.test_data_path = (
-            f"./data/{self.data_source}/{self.data_name}"
+            f"{self.script_dir}/training_data/{self.data_source}/{self.data_name}"
         )
         self.model_name = f'{self.data_name}{strToSuffix(config["model"]["suffix"])}'
 
@@ -206,7 +207,7 @@ class Trainer:
         save reward data & validation makespan data (during training) and the entire training time
         """
         file_writing_obj = open(
-            f"./train_log/{self.data_source}/"
+            f"{self.script_dir}/train_log/{self.data_source}/"
             + "reward_"
             + self.model_name
             + ".txt",
@@ -215,7 +216,7 @@ class Trainer:
         file_writing_obj.write(str(self.log))
 
         file_writing_obj1 = open(
-            f"./train_log/{self.data_source}/"
+            f"{self.script_dir}/train_log/{self.data_source}/"
             + "valiquality_"
             + self.model_name
             + ".txt",
@@ -228,7 +229,7 @@ class Trainer:
         save the results of validation
         """
         file_writing_obj1 = open(
-            f"./train_log/{self.data_source}/"
+            f"{self.script_dir}/train_log/{self.data_source}/"
             + "valiquality_"
             + self.model_name
             + ".txt",
@@ -256,7 +257,7 @@ class Trainer:
                     self.op_per_job_min,
                     self.op_per_job_max,
                     nums_ope=prepare_JobLength,
-                    path="./test",
+                    path=f"{self.script_dir}/test",
                     flag_doc=False,
                 )
                 JobLength, OpPT, _ = case.get_case(i)
@@ -341,7 +342,7 @@ class Trainer:
         """
         torch.save(
             self.ppo.policy.state_dict(),
-            f"./save/{self.data_source}"
+            f"{self.script_dir}/save/{self.data_source}"
             f"/{self.model_name}.pth",
         )
 
@@ -350,7 +351,7 @@ class Trainer:
         load the trained model
         """
         model_path = (
-            f"./save/{self.data_source}/{self.model_name}.pth"
+            f"{self.script_dir}/save/{self.data_source}/{self.model_name}.pth"
         )
         self.ppo.policy.load_state_dict(torch.load(model_path, map_location="cuda"))
 

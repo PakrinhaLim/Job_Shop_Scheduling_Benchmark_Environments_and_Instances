@@ -1,0 +1,34 @@
+c:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\.venv\Lib\site-packages\torch\__init__.py:1275: UserWarning: torch.set_default_tensor_type() is deprecated as of PyTorch 2.1, please use torch.set_default_dtype() and torch.set_default_device() as alternatives. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\tensor\python_tensor.cpp:436.)
+  _C._set_default_tensor_type(t)
+Loading parameters from configs/MADRL.toml
+Initializing device...
+Device initialized: cuda:0
+Initializing Trainer...
+Starting training loop...
+Starting MADRL Training...
+progress:   0%|          | 0/100 [00:00<?, ?it/s]progress:   1%|1         | 1/100 [00:09<16:17,  9.87s/it]progress:   2%|2         | 2/100 [00:16<13:17,  8.14s/it]progress:   2%|2         | 2/100 [00:18<15:24,  9.44s/it]
+Traceback (most recent call last):
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\train_MADRL.py", line 232, in <module>
+    main(param_file=args.config_file)
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\train_MADRL.py", line 222, in main
+    trainer.train()
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\train_MADRL.py", line 137, in train
+    state, reward, done = self.env.step_madrl(actions.cpu().numpy())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\madrl_env.py", line 675, in step_madrl
+    self._step_core(chosen_job, m, active_envs)
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\madrl_env.py", line 567, in _step_core
+    self.construct_op_features()
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\madrl_env.py", line 314, in construct_op_features
+    self.norm_op_features()
+  File "C:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\solution_methods\MADRL\src\madrl_env.py", line 325, in norm_op_features
+    var_fea_j = np.var(temp, axis=1)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\.venv\Lib\site-packages\numpy\_core\fromnumeric.py", line 4318, in var
+    return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\msi\Documents\Job_Shop_Scheduling_Benchmark_Environments_and_Instances\.venv\Lib\site-packages\numpy\_core\_methods.py", line 208, in _var
+    ret = umr_sum(x, axis, dtype, out, keepdims=keepdims, where=where)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+^C
