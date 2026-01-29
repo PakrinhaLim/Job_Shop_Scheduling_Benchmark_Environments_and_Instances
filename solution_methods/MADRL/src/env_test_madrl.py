@@ -41,33 +41,31 @@ class MADRL_FJSPEnv_test(MADRL_FJSPEnv):
         
         return super(MADRL_FJSPEnv_test, self).step_madrl(actions.reshape(1, -1))
 
-    def _step_core(self, env_idx, m, job_idx):
+    def _step_core(self, chosen_job, m, active_envs):
         # Call parent's _step_core to update tensor states
         # The parent _step_core handles internal state updates.
-        # However, parent _step_core returns internal indices.
         
-        # We need to execute the scheduling on JSP_instance BEFORE or AFTER parent update?
-        # The parent update relies on current state.
-        
-        # Let's repeat what's done in _step_core but add JSP_instance update.
-        # Or better, copy the logic since it's short.
-        
-        if job_idx == -1:
-            return
-            
-        op_idx = self.candidate[env_idx, job_idx]
-        
-        # --- Update JSP_instance ---
-        operation = self.JSP_instance.operations[op_idx.item()]
-        # processing time is in op_pt[env_idx, op_idx, m]
-        duration = self.op_pt[env_idx, op_idx, m].item()
-        
-        self.JSP_instance.schedule_operation_on_machine(operation, m, duration)
-        self.JSP_instance.get_job(operation.job_id).scheduled_operations.append(operation)
-        # ---------------------------
+        # We need to execute the scheduling on JSP_instance for each active environment
+        op_indices = self.candidate[active_envs, chosen_job]
+
+        for i, env_idx in enumerate(active_envs):
+            job_idx = chosen_job[i]
+            op_idx = op_indices[i]
+
+            if job_idx == -1:
+                continue
+
+            # --- Update JSP_instance ---
+            operation = self.JSP_instance.operations[op_idx]
+            # processing time is in true_op_pt[env_idx, op_idx, m]
+            duration = self.true_op_pt[env_idx, op_idx, m].item()
+
+            self.JSP_instance.schedule_operation_on_machine(operation, m, duration)
+            self.JSP_instance.get_job(operation.job_id).scheduled_operations.append(operation)
+            # ---------------------------
 
         # Call parent core (updates dynamic_pair_mask, etc.)
-        super()._step_core(env_idx, m, job_idx)
+        super()._step_core(chosen_job, m, active_envs)
 
     def reset(self):
         self.JSP_instance.reset()

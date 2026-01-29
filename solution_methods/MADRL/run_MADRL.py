@@ -42,7 +42,7 @@ def run_MADRL_FJSP(jobShopEnv, **parameters):
     # load trained policy
     model_source = parameters['model']['source']
     trained_policy_name = parameters['test_parameters']['trained_policy']
-    trained_policy_path = (os.path.dirname(os.path.abspath(__file__)) + f"\save\{model_source}\{trained_policy_name}.pth")
+    trained_policy_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", model_source, f"{trained_policy_name}.pth")
     
     if not os.path.exists(trained_policy_path):
         logging.error(f"Trained policy not found at {trained_policy_path}")
@@ -56,59 +56,45 @@ def run_MADRL_FJSP(jobShopEnv, **parameters):
     # Get state
     state = env_test.state
 
-    while True:
-        with torch.no_grad():
-            pi, _ = ppo.policy(
-                fea_j=state.fea_j_tensor,
-                op_mask=state.op_mask_tensor,
-                candidate=state.candidate_tensor,
-                fea_m=state.fea_m_tensor,
-                mch_mask=state.mch_mask_tensor,
-                comp_idx=state.comp_idx_tensor,
-                dynamic_pair_mask=state.dynamic_pair_mask_tensor,
-                fea_pairs=state.fea_pairs_tensor,
-            )
+    try:
+        while True:
+            with torch.no_grad():
+                pi, _ = ppo.policy(
+                    fea_j=state.fea_j_tensor,
+                    op_mask=state.op_mask_tensor,
+                    candidate=state.candidate_tensor,
+                    fea_m=state.fea_m_tensor,
+                    mch_mask=state.mch_mask_tensor,
+                    comp_idx=state.comp_idx_tensor,
+                    dynamic_pair_mask=state.dynamic_pair_mask_tensor,
+                    fea_pairs=state.fea_pairs_tensor,
+                )
 
-        # Choose action
-        # pi: [1, J, M]
-        # We need to sample actions or take greedy max
-        if parameters["test_parameters"]["sample"]:
-            actions, _ = sample_action_madrl(pi) # Returns [1, M]
-        else:
-            # Greedy: argmax over J for each M
-            # Need to handle invalid actions (where pi is all masked/0)
-            # pi has -inf or nan where invalid? 
-            # In madrl_model: pi = softmax(scores). Compatible pairs only. 
-            # Incompatible are masked to -inf before softmax -> 0 probability.
-            # So we can just take argmax.
-            # But if a machine has NO valid jobs, all are 0/nan.
-            
-            # Check for invalid machines (all prob 0 or nan)
-            # pi [1, J, M]
-            pi_m = pi.permute(0, 2, 1) # [1, M, J]
-            actions = torch.argmax(pi_m, dim=2) # [1, M]
-            
-            # If all are perfectly 0, argmax might just pick index 0. 
-            # In validation/test, strict greedy is fine unless it picks an invalid op.
-            # MADRL environment checks validity. If we pick an invalid op, env might complain or crash?
-            # Env checks valid_job_indices.
-            # Let's ensure we pick a valid one or -1.
-            
-            # Identify machines with no valid options
-            # If dynamic_pair_mask is True (invalid), then score was -inf.
-            # dynamic_pair_mask: [sz_b, J, M]
-            # If all J are True for a machine m, then m has no actions.
-            
-            mask = state.dynamic_pair_mask_tensor # [1, J, M]
-            all_invalid = mask.all(dim=1) # [1, M]
-            
-            actions[all_invalid] = -1
-            
-        # Perform action
-        state, reward, done = env_test.step_madrl(actions.cpu().numpy())
+            # Choose action
+            # pi: [1, J, M]
+            # We need to sample actions or take greedy max
+            if parameters["test_parameters"]["sample"]:
+                actions, _ = sample_action_madrl(pi) # Returns [1, M]
+            else:
+                # Greedy: argmax over J for each M
+                pi_m = pi.permute(0, 2, 1) # [1, M, J]
+                actions = torch.argmax(pi_m, dim=2) # [1, M]
+                
+                mask = state.dynamic_pair_mask_tensor # [1, J, M]
+                all_invalid = mask.all(dim=1) # [1, M]
+                
+                actions[all_invalid] = -1
+                
+            # Perform action
+            state, reward, done = env_test.step_madrl(actions.cpu().numpy())
 
-        if done.all():
-            break
+            if done.all():
+                break
+    except Exception as e:
+        logging.error(f"Error during runtime: {e}")
+        import traceback
+        logging.error(traceback.format_exc())
+        return None, None
 
     makespan = env_test.JSP_instance.makespan
     logging.info(f"Makespan: {makespan}")

@@ -6,3 +6,5 @@
 *.pt
 *.toml
 *.pth
+*.log
+*.txt
