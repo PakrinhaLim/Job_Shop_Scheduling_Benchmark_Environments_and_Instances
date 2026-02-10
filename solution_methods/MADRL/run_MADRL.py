@@ -15,7 +15,7 @@ from solution_methods.helper_functions import load_job_shop_env, load_parameters
 from solution_methods.DANIEL.src.common_utils import sample_action
 from solution_methods.MADRL.src.env_test_madrl import MADRL_FJSPEnv_test
 from solution_methods.MADRL.network.ppo_madrl import PPO_initialize
-from solution_methods.DANIEL.utils import output_dir_exp_name, results_saving
+from solution_methods.MADRL.utils import output_dir_exp_name, results_saving
 from solution_methods.MADRL.train_MADRL import sample_action_madrl
 
 # Re-use DANIEL config structure where possible
@@ -143,7 +143,7 @@ def main(param_file=PARAM_FILE):
 
         # Save results if enabled
         if save_results:
-            results_saving(makespan, output_dir, parameters)
+            results_saving(makespan, jobShopEnv, output_dir, parameters)
             logging.info(f"Results saved to {output_dir}")
 
 
