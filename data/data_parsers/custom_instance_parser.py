@@ -16,6 +16,36 @@ def parse(processing_info, instance_name="custom_problem_instance"):
         jobShop.add_machine(Machine(machine_id))
     jobShop.set_nr_of_machines(number_total_machines)
 
+    # Create mapping for machine names to IDs if keys are strings
+    machine_name_to_id = {}
+    current_machine_id = 0
+
+    # First pass: Identify all unique machines from processing times if not strictly machine_0...machine_N format
+    # However, existing logic seems to depend on "machine_X" format or we need a mapping.
+    # We will build a mapping dynamically or trust the input follows a predictable order if it's a list.
+    # But usually processing_times is a dictionary "MachineName": "Time".
+
+    # Let's create a robust mapping. We can iterate through setup times keys which usually cover all machines.
+    # Or just assume we can map them as we encounter them?
+    # Better to pre-populate based on nr_machines if possible, but names are unknown.
+    # Best source of machine names is usually keys of sequence_dependent_setup_times or keys in operations.
+
+    setup_times = processing_info.get("sequence_dependent_setup_times", {})
+    if setup_times:
+       machine_names = list(setup_times.keys())
+       # Sort to ensure deterministic order if needed, though usually order in file implies ID
+       # Let's accept them in order.
+       for idx, name in enumerate(machine_names):
+           machine_name_to_id[name] = idx
+    else:
+       # Fallback: scan jobs for machine names
+       seen_machines = set()
+       for job in processing_info["jobs"]:
+           for op in job["operations"]:
+               seen_machines.update(op["processing_times"].keys())
+       for idx, name in enumerate(sorted(list(seen_machines))): # Sorted for determinism
+           machine_name_to_id[name] = idx
+
     # Configure jobs, operations, and processing times
     for job_info in processing_info["jobs"]:
         job = Job(job_id=job_info["job_id"])
@@ -23,9 +53,21 @@ def parse(processing_info, instance_name="custom_problem_instance"):
         for operation_info in job_info["operations"]:
             operation = Operation(job, job_info["job_id"], operation_info["operation_id"])
 
-            # Convert machine names (e.g., "machine_1") to numeric IDs for compatibility
             for machine_key, processing_time in operation_info["processing_times"].items():
-                machine_id = int(machine_key.split("_")[1])-1
+                if machine_key in machine_name_to_id:
+                     machine_id = machine_name_to_id[machine_key]
+                else:
+                    # Fallback for "machine_X" format if not in map
+                    try:
+                        machine_id = int(machine_key.split("_")[1])-1
+                    except (IndexError, ValueError):
+                         # If it's a new name not seen before (unlikely if we scanned setup_times), add it?
+                         # Better to fail or log. For now, let's assume valid map or machine_X.
+                         # If we strictly follow the plan, we should handle arbitrary names.
+                         # If we didn't find it in setup_times, maybe we should add it now (if we didn't do the full scan)
+                         # But we did the full scan above.
+                         raise ValueError(f"Unknown machine name: {machine_key}")
+
                 operation.add_operation_option(machine_id, processing_time)
 
             job.add_operation(operation)
@@ -37,7 +79,7 @@ def parse(processing_info, instance_name="custom_problem_instance"):
     precedence_relations = {}
     for job_info in processing_info["jobs"]:
         for op_info in job_info["operations"]:
-            if op_info["predecessors"] is not None:
+            if op_info["predecessors"] is not None and op_info["predecessors"] != "None":
                 operation = jobShop.get_operation(op_info["operation_id"])
                 precedence_relations[op_info["operation_id"]] = []
                 for predecessor in op_info["predecessors"]:
@@ -48,11 +90,14 @@ def parse(processing_info, instance_name="custom_problem_instance"):
                 precedence_relations[op_info["operation_id"]] = []
 
     # Configure sequence-dependent setup times for each machine and operation pair
-    setup_times = processing_info["sequence_dependent_setup_times"]
     sequence_dependent_setup_times = {}
 
     for machine_key, setup_matrix in setup_times.items():
-        machine_id = int(machine_key.split("_")[1])-1  # Convert machine_1 to machine ID 1
+        if machine_key in machine_name_to_id:
+             machine_id = machine_name_to_id[machine_key]
+        else:
+             machine_id = int(machine_key.split("_")[1])-1
+
         machine_setup_times = {}
 
         # Map the setup times for all pairs of operations

@@ -1,0 +1,23 @@
+[train]
+problem_instance = "/solution_methods/FJSP_DRL/training_data/1005/"
+
+[test]
+problem_instance = "/fjsp/brandimarte/Mk10.fjs"
+
+[madrl]
+lr = 0.002              # Learning Rate
+gamma = 0.99            # Discount factor
+eps_clip = 0.2          # PPO clip ratio
+k_epochs = 4            # Update policy for K epochs per update
+hidden_size = 64        # Actor-Critic Hidden Layer Size
+
+[train_params]
+max_episodes = 2000     # Total training episodes
+max_timesteps = 1000    # Max steps per episode
+update_timestep = 2000  # Update policy every n timesteps (collected across all agents)
+
+[output]
+save_freq = 100         # Save model every n episodes
+log_interval = 10       # Log progress every n episodes
+folder = "results/MADRL"
+exp_name = "test_run"

@@ -3,6 +3,14 @@ import logging
 import os
 import torch
 
+import sys
+from pathlib import Path
+
+# Add project root to sys.path to allow importing modules from the root
+project_root = str(Path(__file__).resolve().parent.parent.parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
 from visualization import gantt_chart, precedence_chart
 from solution_methods.helper_functions import load_job_shop_env, load_parameters, initialize_device, set_seeds
 from solution_methods.DANIEL.src.common_utils import greedy_select_action, sample_action
@@ -10,7 +18,8 @@ from solution_methods.DANIEL.src.env_test import FJSPEnv_test
 from solution_methods.DANIEL.network.PPO import PPO_initialize
 from solution_methods.DANIEL.utils import output_dir_exp_name, results_saving
 
-PARAM_FILE = "../../configs/DANIEL.toml"
+# Resolve config file path relative to this script
+PARAM_FILE = str(Path(__file__).resolve().parent.parent.parent / "configs" / "DANIEL.toml")
 logging.basicConfig(level=logging.INFO)
 
 
