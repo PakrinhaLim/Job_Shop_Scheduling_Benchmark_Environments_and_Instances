@@ -34,8 +34,13 @@ def run_L2D(jobShopEnv, **parameters):
     if device.type == 'cuda':
         torch.cuda.set_device(device)
 
+    # Calculate max operations per job to use as effective n_m for the agent
+    real_n_m = max(len(job.operations) for job in jobShopEnv.jobs)
+    logging.info(f"Using real_n_m={real_n_m} (max operations per job) instead of nr_of_machines={jobShopEnv.nr_of_machines}")
+
     # Configure test environment
-    env_test = Env_test(n_j=jobShopEnv.nr_of_jobs, n_m=jobShopEnv.nr_of_machines)
+    logging.info(f"DEBUG: initializing Env_test with n_j={jobShopEnv.nr_of_jobs}, n_m={real_n_m}")
+    env_test = Env_test(n_j=jobShopEnv.nr_of_jobs, n_m=real_n_m)
 
     # Initialize PPO model with network and training parameters
     model_parameters = parameters["network_parameters"]
@@ -45,7 +50,7 @@ def run_L2D(jobShopEnv, **parameters):
               k_epochs=train_parameters["k_epochs"],
               eps_clip=train_parameters["eps_clip"],
               n_j=jobShopEnv.nr_of_jobs,
-              n_m=jobShopEnv.nr_of_machines,
+              n_m=real_n_m,
               num_layers=model_parameters["num_layers"],
               neighbor_pooling_type=model_parameters["neighbor_pooling_type"],
               input_dim=model_parameters["input_dim"],
@@ -62,9 +67,11 @@ def run_L2D(jobShopEnv, **parameters):
     logging.info(f"Trained policy loaded from {parameters['test_parameters'].get('trained_policy')}.")
 
     # Initialize graph pooling step
+    # Use real_n_m for graph construction
+    n_nodes = jobShopEnv.nr_of_jobs * real_n_m
     g_pool_step = g_pool_cal(graph_pool_type=model_parameters["graph_pool_type"],
-                             batch_size=torch.Size([1, jobShopEnv.nr_of_jobs * jobShopEnv.nr_of_machines, jobShopEnv.nr_of_jobs * jobShopEnv.nr_of_machines]),
-                             n_nodes=jobShopEnv.nr_of_jobs * jobShopEnv.nr_of_machines,
+                             batch_size=torch.Size([1, n_nodes, n_nodes]),
+                             n_nodes=n_nodes,
                              device=device)
 
     # Run environment instance

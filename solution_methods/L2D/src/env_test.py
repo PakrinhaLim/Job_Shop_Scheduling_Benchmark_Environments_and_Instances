@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -48,9 +49,15 @@ class NipsJSPEnv_test():
         self.JSM_adj = self_as_nei + conj_nei_up_stream
 
         # initialize features
-        self.JSM_LBs = np.zeros((len(self.JobShopModule.jobs), len(self.JobShopModule.machines)), dtype=np.single)
+        self.JSM_LBs = np.zeros((len(self.JobShopModule.jobs), self.number_of_machines), dtype=np.single)
         for i in range(len(self.JobShopModule.jobs)):
-            for j in range(len(self.JobShopModule.machines)):
+            # Use the actual number of operations for the job, bounded by the allocated matrix size
+            num_ops = len(self.JobShopModule.jobs[i].operations)
+            if num_ops > self.number_of_machines:
+                # print(f"Warning: Job {i} has {num_ops} operations, but environment configured for {self.number_of_machines} machines. Truncating.")
+                num_ops = self.number_of_machines
+                
+            for j in range(num_ops):
                 if j == 0:
                     self.JSM_LBs[i, j] = list(self.JobShopModule.jobs[i].operations[j].processing_times.values())[0]
                 else:

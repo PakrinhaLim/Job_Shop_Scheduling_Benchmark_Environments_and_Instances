@@ -1,0 +1,8 @@
+Instance,Method,Makespan,Status,Time
+/fjsp/barnes/mt10c1.fjs,FJSP_DRL,523.0,Success,6.82
+/fjsp/barnes/mt10c1.fjs,DANIEL,1089.0,Success,6.43
+/fjsp/barnes/mt10c1.fjs,L2D,1268.0,Success,4.82
+/fjsp/barnes/mt10c1.fjs,CP_SAT,927.0,Success,8.10
+/fjsp/barnes/mt10c1.fjs,GA,1125.0,Success,12.82
+/fjsp/barnes/mt10c1.fjs,MILP,No Output,No Output,3.47
+/fjsp/barnes/mt10c1.fjs,dispatching_rules,1153.0,Success,3.76

@@ -96,6 +96,7 @@ def main(param_file=PARAM_FILE):
 
     jobShopEnv = load_job_shop_env(parameters['test_parameters']['problem_instance'])
     makespan, jobShopEnv = run_FJSP_DRL(jobShopEnv, **parameters)
+    logging.info(f"Makespan: {makespan}")
 
 
     if makespan is not None:
