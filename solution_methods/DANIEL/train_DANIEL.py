@@ -52,9 +52,11 @@ class Trainer:
             os.makedirs(f"{self.script_dir}/train_log/{self.data_source}")
 
         if device.type == "cuda":
-            torch.set_default_tensor_type("torch.cuda.FloatTensor")
+            torch.set_default_dtype(torch.float32)
+            torch.set_default_device("cuda")
         else:
-            torch.set_default_tensor_type("torch.FloatTensor")
+            torch.set_default_dtype(torch.float32)
+            torch.set_default_device("cpu")
 
         if self.data_source == "SD1":
             self.data_name = f"{self.n_j}x{self.n_m}"

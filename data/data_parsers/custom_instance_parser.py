@@ -19,6 +19,8 @@ def parse(processing_info, instance_name="custom_problem_instance"):
     # Configure jobs, operations, and processing times
     for job_info in processing_info["jobs"]:
         job = Job(job_id=job_info["job_id"])
+        if "due_date" in job_info:
+            job.due_date = job_info["due_date"]
 
         for operation_info in job_info["operations"]:
             operation = Operation(job, job_info["job_id"], operation_info["operation_id"])

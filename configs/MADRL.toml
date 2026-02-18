@@ -1,0 +1,83 @@
+[test_parameters]
+seed = 2024                 # Set random seed for result replication
+problem_instance = "/fjsp/brandimarte/Mk09.fjs"  # Problem instance for testing
+trained_policy = '20x10+mix'     # model for testing
+sample = true              # sample from policy if true, else use argmax (greedy)
+sample_times = 200          # Sampling times for the sampling strategy
+show_precedences = true     # draw precedence relations graph of the problem instance
+show_gantt = true           # draw ganttchart of found solution
+save_gantt = true           # save ganttchart to file
+save_results = true         # save results to file
+exp_name = ""               # name of the experiment, used for saving results.
+folder = ""                 # folder to save results
+
+[device]
+name = "cpu"  # Device name
+id = "0"  # Device id
+
+[model]
+suffix = ""  # Suffix of the model
+source = "SD2"  # Suffix of the data that the model was trained on
+
+[data]
+suffix = "mix"  # Suffix of the data
+source = "SD2"  # Suffix of test data
+
+[SD2_data_generation]
+op_per_job = 0          # Number of operations per job
+op_per_mch_min = 1      # Minimum number of compatible machines
+op_per_mch_max = 5      # Maximum number of compatible machines
+data_size = 100         # The number of instances for data generation
+data_type = "test"      # Generated data type (test/vali)
+
+[seed]
+seed_datagen = 200          # Seed for data generation
+seed_train_vali_datagen = 100  # Seed for generate validation data
+seed_train = 300            # Seed for training
+
+[env]
+n_j = 20         # Number of jobs
+n_m = 10           # Number of machines
+low = 1           # Lower Bound of processing time
+high = 99         # Upper Bound of processing time
+
+[network]
+fea_j_input_dim = 10          # Dimension of operation raw feature vectors
+fea_m_input_dim = 8           # Dimension of machine raw feature vectors
+dropout_prob = 0.0            # Dropout rate
+num_heads_OAB = [4, 4]        # Attention heads
+num_heads_MAB = [4, 4]
+layer_fea_output_dim = [32, 8] # DAN layer output dimension
+num_mlp_layers_actor = 3      
+hidden_dim_actor = 64         
+num_mlp_layers_critic = 3     
+hidden_dim_critic = 64        
+
+[PPO_Algorithm]
+num_envs = 20               # Batch size for training environments
+max_updates = 100           
+lr = 3e-4                   
+gamma = 1                   
+k_epochs = 4                
+eps_clip = 0.2              
+vloss_coef = 0.5            
+ploss_coef = 1              
+entloss_coef = 0.01         
+tau = 0                     
+gae_lambda = 0.98           
+
+[training]
+train_size = "20x10"         
+validate_timestep = 10      
+reset_env_timestep = 20     
+minibatch_size = 1024       
+
+[energy]
+# Power coefficients for machines (kW)
+# These are example values; for a real paper, you can cite specific industrial machine specs.
+busy_power = [15.0, 20.0, 12.0, 18.0, 25.0, 14.0, 22.0, 16.0, 19.0, 21.0, 17.5, 23.0, 13.5, 16.5, 20.5] # for n_m = 15
+idle_power = [2.0, 3.5, 1.8, 2.5, 4.0, 2.2, 3.1, 2.6, 2.9, 3.3, 2.4, 3.8, 1.9, 2.7, 3.0]           # for n_m = 15
+
+# Weight for the energy penalty in the reward function
+# beta = 0.0 means Makespan only. beta > 0.0 encourages energy saving.
+beta = 0.0

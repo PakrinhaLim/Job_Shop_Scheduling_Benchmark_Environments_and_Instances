@@ -19,6 +19,7 @@ from solution_methods.DANIEL.src.common_utils import setup_seed, strToSuffix
 from solution_methods.DANIEL.src.data_utils import CaseGenerator, SD2_instance_generator, load_data_from_files
 from solution_methods.MADRL.src.madrl_env import MADRL_FJSPEnv
 from solution_methods.MADRL.network.ppo_madrl import PPO_initialize, Memory
+from solution_methods.MADRL.utils import get_objective_folder
 from solution_methods.helper_functions import load_parameters, initialize_device
 
 PARAM_FILE = str(base_path) + "/configs/MADRL.toml"
@@ -78,9 +79,11 @@ class Trainer:
              os.makedirs(f"{self.script_dir}/train_log/{self.data_source}")
 
         if device.type == "cuda":
-            torch.set_default_tensor_type("torch.cuda.FloatTensor")
+            torch.set_default_dtype(torch.float32)
+            torch.set_default_device("cuda")
         else:
-            torch.set_default_tensor_type("torch.FloatTensor")
+            torch.set_default_dtype(torch.float32)
+            torch.set_default_device("cpu")
 
         self.data_name = f'{self.n_j}x{self.n_m}{strToSuffix(config["data"]["suffix"])}'
         self.model_name = f'{self.data_name}{strToSuffix(config["model"]["suffix"])}'
@@ -89,7 +92,7 @@ class Trainer:
         setup_seed(self.seed_train)
 
         # Env
-        self.env = MADRL_FJSPEnv(self.n_j, self.n_m, device)
+        self.env = MADRL_FJSPEnv(self.n_j, self.n_m, device, config=self.config)
         
         self.ppo = PPO_initialize(config)
         self.memory = Memory(
@@ -152,11 +155,13 @@ class Trainer:
             loss, v_loss = self.ppo.update(self.memory)
             self.memory.clear_memory()
             
+            # Update rewards and log energy info
             mean_rewards = np.mean(ep_rewards)
-            self.log.append([i_update, mean_rewards])
+            mean_energy = np.mean(self.env.energy_consumed) # Energy consumed in the last rollout
+            self.log.append([i_update, mean_rewards, mean_energy])
             
             if (i_update + 1) % 10 == 0:
-                 tqdm.write(f"Episode {i_update+1}: Reward {mean_rewards:.2f} Loss {loss:.4f}")
+                 tqdm.write(f"Episode {i_update+1}: Reward {mean_rewards:.2f} Energy {mean_energy:.2f} Loss {loss:.4f}")
                  self.save_model()
 
         self.save_training_log()
@@ -182,9 +187,12 @@ class Trainer:
         return dataset_JobLength, dataset_OpPT
 
     def save_model(self):
+        obj_folder = get_objective_folder(self.config)
+        save_path = f"{self.script_dir}/save/{obj_folder}/{self.data_source}"
+        os.makedirs(save_path, exist_ok=True)
         torch.save(
             self.ppo.policy.state_dict(),
-            f"{self.script_dir}/save/{self.data_source}/{self.model_name}.pth",
+            f"{save_path}/{self.model_name}.pth",
         )
 
     def save_training_log(self):

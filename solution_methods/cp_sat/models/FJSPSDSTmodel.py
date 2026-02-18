@@ -71,7 +71,7 @@ def update_env(jobShopEnv, vars, solver, status, solution_count, time_limit):
     return jobShopEnv, results
 
 
-def fjsp_sdst_cp_sat_model(jobShopEnv) -> tuple[cp_model.CpModel, dict]:
+def fjsp_sdst_cp_sat_model(jobShopEnv, objective="makespan") -> tuple[cp_model.CpModel, dict]:
     """
     Creates a flexible job shop scheduling with sequence dependent setup times model using the OR-Tools library.
     """
@@ -182,9 +182,23 @@ def fjsp_sdst_cp_sat_model(jobShopEnv) -> tuple[cp_model.CpModel, dict]:
                 model.Add(op_i[0].EndExpr() + setup_time_ij <= op_j[0].StartExpr()).OnlyEnforceIf(before_var)
                 model.Add(op_j[0].EndExpr() + setup_time_ji <= op_i[0].StartExpr()).OnlyEnforceIf(before_var.Not())
 
-    # Makespan objective
+    # Objective
     makespan = model.NewIntVar(0, horizon, "makespan")
     model.AddMaxEquality(makespan, job_ends)
-    model.Minimize(makespan)
+
+    if objective == "makespan":
+        model.Minimize(makespan)
+    elif objective == "total_tardiness":
+        total_tardiness = model.NewIntVar(0, horizon * len(job_ends), "total_tardiness")
+        job_tardiness_vars = []
+        for job_id, end_var in enumerate(job_ends):
+            due_date = int(jobShopEnv.jobs[job_id].due_date)
+            tardiness_var = model.NewIntVar(0, horizon, f"tardiness_{job_id}")
+            model.Add(tardiness_var >= end_var - due_date)
+            job_tardiness_vars.append(tardiness_var)
+        model.Add(total_tardiness == sum(job_tardiness_vars))
+        model.Minimize(total_tardiness)
+    else:
+        raise ValueError(f"Unknown objective: {objective}")
 
     return model, {"starts": starts, "presences": presences}

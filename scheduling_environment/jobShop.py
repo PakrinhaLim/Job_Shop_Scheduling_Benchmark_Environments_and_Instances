@@ -203,6 +203,21 @@ class JobShop:
                 max_flowtime = flow_time
         return max_flowtime
 
+    @property
+    def total_tardiness(self) -> float:
+        """Return the total tardiness of all jobs."""
+        return sum(job.tardiness for job in self._jobs)
+
+    @property
+    def mean_tardiness(self) -> float:
+        """Return the mean tardiness of all jobs."""
+        return self.total_tardiness / self._nr_of_jobs if self._nr_of_jobs > 0 else 0.0
+
+    @property
+    def max_tardiness(self) -> float:
+        """Return the maximum tardiness among all jobs."""
+        return max(job.tardiness for job in self._jobs) if self._jobs else 0.0
+
     def schedule_operation_on_machine(self, operation: Operation, machine_id, duration) -> None:
         """Schedule an operation on a specific machine."""
         machine = self.get_machine(machine_id)

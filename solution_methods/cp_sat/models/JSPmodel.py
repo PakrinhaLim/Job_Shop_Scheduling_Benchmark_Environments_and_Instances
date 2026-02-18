@@ -68,7 +68,7 @@ def update_env(jobShopEnv, vars, solver, status, solution_count, time_limit):
     return jobShopEnv, results
 
 
-def jsp_cp_sat_model(jobShopEnv) -> tuple[cp_model.CpModel, dict]:
+def jsp_cp_sat_model(jobShopEnv, objective="makespan") -> tuple[cp_model.CpModel, dict]:
     """
     Creates a job shop scheduling model using the OR-Tools library.
     """
@@ -117,5 +117,22 @@ def jsp_cp_sat_model(jobShopEnv) -> tuple[cp_model.CpModel, dict]:
     # Makespan objective
     makespan = model.NewIntVar(0, horizon, "makespan")
     model.AddMaxEquality(makespan, [all_tasks[job_id, len(job) - 1].end for job_id, job in enumerate(jobs_data)],)
-    model.Minimize(makespan)
+
+    if objective == "makespan":
+        model.Minimize(makespan)
+    elif objective == "total_tardiness":
+        total_tardiness = model.NewIntVar(0, horizon * len(jobs_data), "total_tardiness")
+        job_tardiness_vars = []
+        for job_id, job in enumerate(jobs_data):
+            due_date = int(jobShopEnv.jobs[job_id].due_date)
+            tardiness_var = model.NewIntVar(0, horizon, f"tardiness_{job_id}")
+            # tardiness_var >= end_var - due_date
+            # We use NewIntVar(0, horizon) for tardiness_var to ensure it's non-negative (max(0, completion - due_date))
+            model.Add(tardiness_var >= all_tasks[job_id, len(job) - 1].end - due_date)
+            job_tardiness_vars.append(tardiness_var)
+        model.Add(total_tardiness == sum(job_tardiness_vars))
+        model.Minimize(total_tardiness)
+    else:
+        raise ValueError(f"Unknown objective: {objective}")
+
     return model, {"all_tasks": all_tasks}

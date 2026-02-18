@@ -44,7 +44,7 @@ METHODS = {
         ]
     },
     "CP_SAT": {
-        "script": "solution_methods/CP_SAT/run_CP_SAT.py",
+        "script": "solution_methods/cp_sat/run_cp_sat.py",
         "config": "configs/cp_sat.toml",
         "updates": [
             ('problem_instance = ".*"', f'problem_instance = "{INSTANCE_PATH}"'),

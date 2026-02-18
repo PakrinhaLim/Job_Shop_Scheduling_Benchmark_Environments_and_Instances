@@ -64,6 +64,10 @@ class MADRL_Network(nn.Module):
         # Softmax over J for each M
         pi = F.softmax(candidate_scores, dim=1) # [sz_b, J, M]
 
+        # Handle NaNs if a machine has no compatible jobs (all -inf)
+        if torch.isnan(pi).any():
+            pi = torch.where(torch.isnan(pi), torch.full_like(pi, 1.0/J), pi)
+
         global_feature = torch.cat((fea_j_global, fea_m_global), dim=-1)
         v = self.critic(global_feature)
         

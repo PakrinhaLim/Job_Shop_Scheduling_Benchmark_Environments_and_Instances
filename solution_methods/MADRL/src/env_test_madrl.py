@@ -8,7 +8,7 @@ class MADRL_FJSPEnv_test(MADRL_FJSPEnv):
         n_j = JobShop_module.nr_of_jobs
         n_m = JobShop_module.nr_of_machines
         device = initialize_device(parameters, method="DANIEL") # Reuse DANIEL method name for consistency
-        super().__init__(n_j=n_j, n_m=n_m, device=device)
+        super().__init__(n_j=n_j, n_m=n_m, device=device, config=parameters)
 
         # Assign values to the job_length_list and op_pt_list
         job_length_list = np.asarray([[job.nr_of_ops for job in JobShop_module.jobs]])

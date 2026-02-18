@@ -1,0 +1,3 @@
+Instance,Baseline (Makespan-Only)_Makespan,Baseline (Makespan-Only)_Energy,Green-MADRL (Beta=0.0001)_Makespan,Green-MADRL (Beta=0.0001)_Energy
+/fjsp/brandimarte/Mk10.fjs,385,296.1,407,333.3
+/fjsp/hurink/vdata/la40.fjs,1841,2961.6,1991,2585.0

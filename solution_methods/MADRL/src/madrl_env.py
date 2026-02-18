@@ -52,11 +52,22 @@ class EnvState():
 # I will just reimplement the class to avoid import issues and allowing modifications.
 
 class MADRL_FJSPEnv:
-    def __init__(self, n_j, n_m, device):
+    def __init__(self, n_j, n_m, device, config=None):
         self.number_of_jobs = n_j
         self.number_of_machines = n_m
         self.old_state = EnvState(device)
         self.device = device
+        self.config = config
+
+        # Energy Parameters
+        if config and "energy" in config:
+            self.busy_power = np.array(config["energy"]["busy_power"])
+            self.idle_power = np.array(config["energy"]["idle_power"])
+            self.beta = config["energy"]["beta"]
+        else:
+            self.busy_power = np.zeros(n_m)
+            self.idle_power = np.zeros(n_m)
+            self.beta = 0.0
 
         self.op_fea_dim = 10
         self.mch_fea_dim = 8
@@ -267,6 +278,7 @@ class MADRL_FJSPEnv:
         self.deleted_op_nodes = np.full(
             shape=(self.number_of_envs, self.number_of_ops), fill_value=0, dtype=bool
         )
+        self.energy_consumed = np.zeros(self.number_of_envs)
 
     def logic_operator(self, x, flagT=True):
         if flagT:
@@ -364,7 +376,7 @@ class MADRL_FJSPEnv:
         remain_op_pt = ma.array(self.op_pt, mask=~self.remain_process_relation)
         chosen_op_max_pt = np.expand_dims(
             self.op_max_pt[self.env_job_idx, self.candidate], axis=-1
-        )
+        ) + 1e-8
         max_remain_op_pt = np.max(
             np.max(remain_op_pt, axis=1, keepdims=True), axis=2, keepdims=True
         ).filled(0 + 1e-8)
@@ -611,6 +623,21 @@ class MADRL_FJSPEnv:
         self.construct_mch_features()
         self.construct_pair_features()
 
+        # Update energy consumption (kW*h if PT is in hours, for example)
+        p_busy = self.busy_power[chosen_mch]
+        p_idle = self.idle_power[chosen_mch]
+        
+        # Idle time on this machine since its last processing
+        mch_idle_time = true_chosen_op_st - self.old_mch_free_time_for_energy[active_envs, chosen_mch]
+        pt = self.true_op_pt[active_envs, chosen_op, chosen_mch]
+        
+        # Energy = BusyEnergy + IdleEnergy
+        step_energy = p_busy * pt + p_idle * mch_idle_time
+        self.energy_consumed[active_envs] += step_energy
+        
+        # Update free time for next energy calculation
+        self.old_mch_free_time_for_energy[active_envs, chosen_mch] = self.true_op_ct[active_envs, chosen_op]
+
     def step_madrl(self, actions_matrix):
         # actions_matrix: [batch_size, n_m] tensor/array.
         # Contains Job ID to schedule, or -1 for no-op.
@@ -628,6 +655,8 @@ class MADRL_FJSPEnv:
         
         # old_makespan
         old_quality = self.max_endTime.copy()
+        self.old_mch_free_time_for_energy = self.true_mch_free_time.copy()
+        self.energy_consumed[:] = 0
         
         for m in m_order:
             actions = actions_matrix[:, m]
@@ -676,8 +705,15 @@ class MADRL_FJSPEnv:
             
             self.env_idxs = original_env_idxs
             
-        # Reward calculation: Change in max_endTime (Lower Bound of makespan)
-        reward = old_quality - np.max(self.op_ct_lb, axis=1)
+        # Reward calculation: Change in max_endTime (Lower Bound of makespan) + Energy Penalty
+        makespan_reward = old_quality - np.max(self.op_ct_lb, axis=1)
+        energy_penalty = self.beta * self.energy_consumed
+        reward = makespan_reward - energy_penalty
+        
+        # Safety check
+        if np.isnan(reward).any():
+            reward = np.nan_to_num(reward)
+        
         self.max_endTime = np.max(self.op_ct_lb, axis=1)
 
         self.state.update(

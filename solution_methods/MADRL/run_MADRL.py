@@ -4,6 +4,7 @@ import logging
 import os
 import torch
 import sys
+import numpy as np
 from pathlib import Path
 
 # Add project root to path
@@ -15,7 +16,7 @@ from solution_methods.helper_functions import load_job_shop_env, load_parameters
 from solution_methods.DANIEL.src.common_utils import sample_action
 from solution_methods.MADRL.src.env_test_madrl import MADRL_FJSPEnv_test
 from solution_methods.MADRL.network.ppo_madrl import PPO_initialize
-from solution_methods.MADRL.utils import output_dir_exp_name, results_saving
+from solution_methods.MADRL.utils import output_dir_exp_name, results_saving, get_objective_folder
 from solution_methods.MADRL.train_MADRL import sample_action_madrl
 
 # Re-use DANIEL config structure where possible
@@ -29,9 +30,11 @@ def run_MADRL_FJSP(jobShopEnv, **parameters):
 
     # Configure default device
     if device.type == "cuda":
-        torch.set_default_tensor_type("torch.cuda.FloatTensor")
+        torch.set_default_dtype(torch.float32)
+        torch.set_default_device("cuda")
     else:
-        torch.set_default_tensor_type("torch.FloatTensor")
+        torch.set_default_dtype(torch.float32)
+        torch.set_default_device("cpu")
 
     # Configure test environment
     env_test = MADRL_FJSPEnv_test(jobShopEnv, parameters)
@@ -42,11 +45,12 @@ def run_MADRL_FJSP(jobShopEnv, **parameters):
     # load trained policy
     model_source = parameters['model']['source']
     trained_policy_name = parameters['test_parameters']['trained_policy']
-    trained_policy_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", model_source, f"{trained_policy_name}.pth")
+    obj_folder = get_objective_folder(parameters)
+    trained_policy_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", obj_folder, model_source, f"{trained_policy_name}.pth")
     
     if not os.path.exists(trained_policy_path):
         logging.error(f"Trained policy not found at {trained_policy_path}")
-        return None, None
+        return None, None, None
 
     policy = torch.load(trained_policy_path, map_location=device, weights_only=True)
     ppo.policy.load_state_dict(policy)
@@ -94,12 +98,14 @@ def run_MADRL_FJSP(jobShopEnv, **parameters):
         logging.error(f"Error during runtime: {e}")
         import traceback
         logging.error(traceback.format_exc())
-        return None, None
+        return None, None, None
 
     makespan = env_test.JSP_instance.makespan
+    total_energy = np.sum(env_test.energy_consumed)
     logging.info(f"Makespan: {makespan}")
+    logging.info(f"Total Energy: {total_energy:.2f}")
 
-    return makespan, env_test.JSP_instance
+    return makespan, total_energy, env_test.JSP_instance
 
 
 def main(param_file=PARAM_FILE):
@@ -110,7 +116,7 @@ def main(param_file=PARAM_FILE):
         return
 
     jobShopEnv = load_job_shop_env(parameters["test_parameters"]["problem_instance"])
-    makespan, jobShopEnv = run_MADRL_FJSP(jobShopEnv, **parameters)
+    makespan, total_energy, jobShopEnv = run_MADRL_FJSP(jobShopEnv, **parameters)
 
     if makespan is not None:
         # Check output configuration and prepare output paths if needed
@@ -143,7 +149,7 @@ def main(param_file=PARAM_FILE):
 
         # Save results if enabled
         if save_results:
-            results_saving(makespan, jobShopEnv, output_dir, parameters)
+            results_saving(makespan, jobShopEnv, output_dir, parameters, energy=total_energy)
             logging.info(f"Results saved to {output_dir}")
 
 

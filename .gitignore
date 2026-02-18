@@ -4,7 +4,7 @@
 *.png
 *.json
 *.pt
-*.toml
+
 *.pth
 *.log
 *.txt

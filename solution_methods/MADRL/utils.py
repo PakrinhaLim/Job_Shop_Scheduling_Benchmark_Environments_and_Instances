@@ -4,8 +4,17 @@ import json
 
 DEFAULT_RESULTS_ROOT = os.path.join(os.getcwd(), "results", "MADRL")
 
+def get_objective_folder(parameters):
+    """Return the subfolder name based on the beta value (objective)."""
+    beta = parameters.get('energy', {}).get('beta', 0.0)
+    if beta == 0:
+        return "makespan_only"
+    else:
+        return "makespan_energy"
+
 def output_dir_exp_name(parameters):
     test_params = parameters.get('test_parameters', {})
+    obj_folder = get_objective_folder(parameters)
     
     if test_params.get('exp_name'):
         exp_name = test_params['exp_name']
@@ -22,13 +31,15 @@ def output_dir_exp_name(parameters):
         exp_name = f"{instance_name}_network_{network}_{strategy}_{timestamp}"
 
     if test_params.get('folder'):
-        output_dir = test_params['folder']
+        output_base = test_params['folder']
     else:
-        output_dir = DEFAULT_RESULTS_ROOT
+        output_base = DEFAULT_RESULTS_ROOT
+        
+    output_dir = os.path.join(output_base, obj_folder)
         
     return output_dir, exp_name
 
-def results_saving(makespan, jobShopEnv, path, parameters):
+def results_saving(makespan, jobShopEnv, path, parameters, energy=None):
     """
     Save the MADRL results to a JSON file.
     """
@@ -55,6 +66,7 @@ def results_saving(makespan, jobShopEnv, path, parameters):
         "trained_policy" : parameters['test_parameters']['trained_policy'],
         "sample": parameters['test_parameters']['sample'],
         "seed": parameters['test_parameters']['seed'],
+        "energy": energy,
         "schedule": schedule
     }
 

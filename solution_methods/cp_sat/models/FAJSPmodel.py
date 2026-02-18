@@ -1,5 +1,5 @@
 """
-This file contains the OR-Tools model for the Flexible Assembly Job Shop Problem (FJSP).
+This file contains the OR-Tools model for the Flexible Assembly Job Shop Problem (FAJSP).
 This code has been adapted from the OR-Tools example for the FJSP, which can be found at:
 https://github.com/google/or-tools/blob/stable/examples/python/flexible_job_shop_sat.py
 """
@@ -73,13 +73,10 @@ def update_env(jobShopEnv, vars, solver, status, solution_count, time_limit):
     return jobShopEnv, results
 
 
-def fajsp_cp_sat_model(jobShopEnv) -> tuple[cp_model.CpModel, dict]:
+def fajsp_cp_sat_model(jobShopEnv, objective="makespan") -> tuple[cp_model.CpModel, dict]:
     """
     Creates a flexible job shop scheduling model using the OR-Tools library.
     """
-
-    import collections
-    from ortools.sat.python import cp_model
 
     # Map job operations to their processing times and machines (according to used OR-tools format)
     jobs_operations = [
@@ -189,8 +186,23 @@ def fajsp_cp_sat_model(jobShopEnv) -> tuple[cp_model.CpModel, dict]:
         if len(intervals) > 1:
             model.AddNoOverlap(intervals)
 
-    # Makespan objective
+    # Objective
     makespan = model.NewIntVar(0, horizon, "makespan")
     model.AddMaxEquality(makespan, job_ends)
-    model.Minimize(makespan)
+
+    if objective == "makespan":
+        model.Minimize(makespan)
+    elif objective == "total_tardiness":
+        total_tardiness = model.NewIntVar(0, horizon * len(job_ends), "total_tardiness")
+        job_tardiness_vars = []
+        for job_id, end_var in enumerate(job_ends):
+            due_date = int(jobShopEnv.jobs[job_id].due_date)
+            tardiness_var = model.NewIntVar(0, horizon, f"tardiness_{job_id}")
+            model.Add(tardiness_var >= end_var - due_date)
+            job_tardiness_vars.append(tardiness_var)
+        model.Add(total_tardiness == sum(job_tardiness_vars))
+        model.Minimize(total_tardiness)
+    else:
+        raise ValueError(f"Unknown objective: {objective}")
+
     return model, {"starts": starts, "presences": presences}
