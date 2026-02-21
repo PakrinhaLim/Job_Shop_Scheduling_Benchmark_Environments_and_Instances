@@ -1,9 +1,9 @@
 [instance]
 online_arrivals = false         # false for static instance (from data) or true for online job arrivals
 problem_instance = "/fjsp_sdst/fattahi/Fattahi_setup_20.fjs"  # static instance (no online arrivals)
-dispatching_rule = "MOR"        # FIFO: First In First Out, MOR: Most Operation Remaining, LOR: Least Operations Remaining,
+dispatching_rule = "FIFO"        # FIFO: First In First Out, MOR: Most Operation Remaining, LOR: Least Operations Remaining,
                                 # MWR: Most Work Remaining, LWR: Least Work Remaining
-machine_assignment_rule = "EET" # SPT: Shortest Processing Time, EET: Earliest End Time
+machine_assignment_rule = "SPT" # SPT: Shortest Processing Time, EET: Earliest End Time
 
 [online_arrival_details]        # Only needed for_online arrivals = true
 number_total_machines = 5       # number of machines

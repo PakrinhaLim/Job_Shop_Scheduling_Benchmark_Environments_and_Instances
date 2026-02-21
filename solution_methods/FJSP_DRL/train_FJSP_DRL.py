@@ -17,7 +17,7 @@ from collections import deque
 from pathlib import Path
 import numpy as np
 import torch
-from visdom import Visdom
+from torch.utils.tensorboard import SummaryWriter
 
 # Add the base path to the Python module search path
 base_path = Path(__file__).resolve().parents[2]
@@ -69,10 +69,10 @@ def train_FJSP_DRL(**parameters):
 
     # Setup for visualization if enabled
     is_viz = train_parameters["viz"]
-    viz = Visdom(env=train_parameters["viz_name"]) if is_viz else None
+    str_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time()))
+    viz = SummaryWriter(log_dir=f"./runs/{train_parameters['viz_name']}_{str_time}") if is_viz else None
 
     # Generate directories for saving logs and models
-    str_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time()))
     save_path = "./saved_models/train_{0}".format(str_time)
     os.makedirs(save_path)
     logging.info(f"Created directory for saving models and logs at: {save_path}")
@@ -109,8 +109,8 @@ def train_FJSP_DRL(**parameters):
             logging.info(f"Iteration {i}: Model updated. Reward: {reward:.3f}, Loss: {loss:.3f}")
             memories.clear_memory()
             if is_viz:
-                viz.line(X=np.array([i]), Y=np.array([reward]), win="reward_envs", update="append")
-                viz.line(X=np.array([i]), Y=np.array([loss]), win="loss_envs", update="append")
+                viz.add_scalar("Train/Reward", reward, i)
+                viz.add_scalar("Train/Loss", loss, i)
 
         # Validate and save best models periodically
         if i % train_parameters["save_timestep"] == 0:
@@ -125,7 +125,7 @@ def train_FJSP_DRL(**parameters):
                 best_models.append(save_file)
                 torch.save(model.policy.state_dict(), save_file)
             if is_viz:
-                viz.line(X=np.array([i]), Y=np.array([validation_result.item()]), win="valid_makespan", update="append")
+                viz.add_scalar("Valid/Makespan", validation_result.item(), i)
 
 
 def main(param_file: str = PARAM_FILE):

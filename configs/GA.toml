@@ -1,5 +1,6 @@
 [instance]
-problem_instance = "/fajsp/dafjs/DAFJS01"
+# problem_instance = "/fajsp/dafjs/DAFJS01"
+problem_instance = "/fjsp/brandimarte/MK09.fjs"
 
 [algorithm]
 population_size = 10    # number of individuals in the population

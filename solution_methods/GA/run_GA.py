@@ -127,6 +127,7 @@ def main(param_file=PARAM_FILE):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description="Run GA")
     parser.add_argument(
         "-f", "--config_file",
