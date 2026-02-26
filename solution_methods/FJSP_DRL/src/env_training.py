@@ -97,6 +97,10 @@ class FJSPEnv_training():
             for j in range(num_data):
                 tensors[j].append(load_data[j])
 
+        # update num_jobs and num_mas to match the case
+        self.num_jobs = num_jobs
+        self.num_mas = num_mas
+
         # dynamic feats
         # shape: (batch_size, num_opes, num_mas)
         self.proc_times_batch = torch.stack(tensors[0], dim=0)

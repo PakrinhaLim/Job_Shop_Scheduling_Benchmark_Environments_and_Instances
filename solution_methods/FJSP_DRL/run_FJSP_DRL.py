@@ -9,7 +9,14 @@
 import argparse
 import logging
 import os
+import sys
+from pathlib import Path
+
 import torch
+
+# Add the base path to the Python module search path
+base_path = Path(__file__).resolve().parents[2]
+sys.path.append(str(base_path))
 
 from visualization import gantt_chart, precedence_chart
 from solution_methods.helper_functions import load_job_shop_env, load_parameters, initialize_device, set_seeds
@@ -21,7 +28,7 @@ from solution_methods.FJSP_DRL.utils import output_dir_exp_name, results_saving
 from solution_methods.FJSP_DRL.src.online_FJSP_DRL import run_online_dispatcher
 
 
-PARAM_FILE = "../../configs/FJSP_DRL.toml"
+PARAM_FILE = str(base_path) + "/configs/FJSP_DRL.toml"
 logging.basicConfig(level=logging.INFO)
 
 
@@ -38,7 +45,7 @@ def run_FJSP_DRL(jobShopEnv, **parameters):
     # Load trained policy
     model_parameters = parameters["model_parameters"]
     test_parameters = parameters["test_parameters"]
-    trained_policy = os.path.dirname(os.path.abspath(__file__)) + test_parameters['trained_policy']
+    trained_policy = str(base_path) + test_parameters['trained_policy']
     if trained_policy.endswith('.pt'):
         if device.type == 'cuda':
             policy = torch.load(trained_policy)
