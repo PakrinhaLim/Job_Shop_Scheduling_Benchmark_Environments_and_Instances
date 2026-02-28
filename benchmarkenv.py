@@ -7,11 +7,11 @@ from data.data_parsers.parser_fjsp import parse_fjsp
 from scheduling_environment.jobShop import JobShop
 
 from solution_methods.helper_functions import load_job_shop_env, load_parameters
-from solution_methods.dispatching_rules.run_dispatching_rules import run_dispatching_rules
-from solution_methods.GA.src.initialization import initialize_run
-from solution_methods.GA.run_GA import run_GA
-from solution_methods.MILP.run_MILP import run_MILP
-from solution_methods.FJSP_DRL.run_FJSP_DRL import run_FJSP_DRL
+# from solution_methods.dispatching_rules.run_dispatching_rules import run_dispatching_rules
+# from solution_methods.GA.src.initialization import initialize_run
+# from solution_methods.GA.run_GA import run_GA
+# from solution_methods.MILP.run_MILP import run_MILP
+from solution_methods.FJSP_DRL.run_FJSP_DRL import run_FJSP_DRL, get_model_and_device
 
 
 
@@ -44,6 +44,9 @@ fjsp_file_paths = [os.path.join(root, file).replace('data', '', 1).replace("\\",
 parameters = load_parameters("configs/fjsp_drl.toml")
 total_instance = len(fjsp_file_paths)
 
+# Load the model once before the loop
+model, device = get_model_and_device(parameters)
+
 
 for i, fjsp_file_path in enumerate(fjsp_file_paths):
     result_path = os.path.join("results/plots", os.path.basename(fjsp_file_path).replace(".fjs", ".png"))
@@ -51,7 +54,7 @@ for i, fjsp_file_path in enumerate(fjsp_file_paths):
         continue
 
     jobShopEnv = load_job_shop_env(fjsp_file_path)
-    makespan, jobShopEnv = run_FJSP_DRL(jobShopEnv, **parameters)
+    makespan, jobShopEnv = run_FJSP_DRL(jobShopEnv, model=model, device=device, **parameters)
     print("{} / {} | {} | Makespan: {}".format(i + 1, total_instance, fjsp_file_path.split('/')[-1], makespan))
 
     os.makedirs("results/json", exist_ok=True)

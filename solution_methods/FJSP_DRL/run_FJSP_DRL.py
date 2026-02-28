@@ -32,8 +32,8 @@ PARAM_FILE = str(base_path) + "/configs/FJSP_DRL.toml"
 logging.basicConfig(level=logging.INFO)
 
 
-def run_FJSP_DRL(jobShopEnv, **parameters):
-    # Set up device and seeds
+def get_model_and_device(parameters):
+    """Load the trained model and initialize the device."""
     device = initialize_device(parameters)
     set_seeds(parameters["test_parameters"]["seed"])
 
@@ -46,6 +46,7 @@ def run_FJSP_DRL(jobShopEnv, **parameters):
     model_parameters = parameters["model_parameters"]
     test_parameters = parameters["test_parameters"]
     trained_policy = str(base_path) + test_parameters['trained_policy']
+
     if trained_policy.endswith('.pt'):
         if device.type == 'cuda':
             policy = torch.load(trained_policy)
@@ -55,12 +56,23 @@ def run_FJSP_DRL(jobShopEnv, **parameters):
         logging.info(f"Trained policy loaded from {test_parameters.get('trained_policy')}.")
         model_parameters["actor_in_dim"] = model_parameters["out_size_ma"] * 2 + model_parameters["out_size_ope"] * 2
         model_parameters["critic_in_dim"] = model_parameters["out_size_ma"] + model_parameters["out_size_ope"]
+        model_parameters["device"] = device
 
-        hgnn_model = HGNNScheduler(model_parameters).to(device)
-        hgnn_model.load_state_dict(policy)
+        model = HGNNScheduler(model_parameters).to(device)
+        model.load_state_dict(policy)
+        return model, device
+    return None, device
+
+
+def run_FJSP_DRL(jobShopEnv, model=None, device=None, **parameters):
+    # Load model and device if not provided
+    if model is None or device is None:
+        model, device = get_model_and_device(parameters)
+
+    test_parameters = parameters["test_parameters"]
 
     if not parameters['test_parameters']['online_arrivals']:
-
+        parameters["test_parameters"]["device"] = str(device)
         env_test = FJSPEnv_test(jobShopEnv, parameters["test_parameters"])
         state = env_test.state
         done = False
@@ -68,7 +80,7 @@ def run_FJSP_DRL(jobShopEnv, **parameters):
         # Generate schedule for instance
         while not done:
             with torch.no_grad():
-                actions = hgnn_model.act(state, [], done, flag_train=False, flag_sample=test_parameters['sample'])
+                actions = model.act(state, [], done, flag_train=False, flag_sample=test_parameters['sample'])
             state, _, done = env_test.step(actions)
         makespan = env_test.JSP_instance.makespan
 
@@ -82,7 +94,7 @@ def run_FJSP_DRL(jobShopEnv, **parameters):
         )
         simulationEnv.simulator.process(
             run_online_dispatcher(
-                simulationEnv, hgnn_model
+                simulationEnv, model
             )
         )
         simulationEnv.simulator.run(
